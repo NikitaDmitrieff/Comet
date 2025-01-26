@@ -1,2 +1,7 @@
 venv
 .streamlit
+/backend/credentials.py
+/backend/analysis/
+.idea
+*__pycache__
+.DS_Store

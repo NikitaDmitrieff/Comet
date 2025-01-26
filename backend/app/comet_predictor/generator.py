@@ -2,22 +2,37 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from backend.app import config
+import config
 
 
 def create_wish_list_data_files():
+    """
+    1. The main csv file is loaded inside config.RAW_WISH_LIST_DATA_PATH
+        (as of today: "comet_predictor/data_wish_list/raw_parsed_wish_list.csv")
 
-    raw_df = pd.read_csv(config.RAW_WISH_LIST_DATA_PATH)
-    raw_df = raw_df.loc[:, ~raw_df.columns.str.contains("^Unnamed")]
+    2. This function parses this raw csv file from the google sheet into:
+        - test_profile_data_wish_list.csv: test profiles for checking rules are correctly enforced
+        - parsed_wish_list.csv: production csv gathering all schools and their respective requirements
+        - test_data_wish_list.csv: test csv gathering all test schools and their respective requirements
+    """
 
-    profile_df = raw_df[raw_df["place"].str.contains("profile", case=False, na=False)]
-    profile_df.to_csv(config.TEST_PROFILE_WISH_LIST_DATA_PATH)
+    raw_schools_and_profiles_df = pd.read_csv(config.RAW_WISH_LIST_DATA_PATH)
+    raw_schools_and_profiles_df = raw_schools_and_profiles_df.loc[:, ~raw_schools_and_profiles_df.columns.str.contains("^Unnamed")]
 
-    raw_df = raw_df[~raw_df["place"].str.contains("profile", case=False, na=False)]
-    prod_df = raw_df[~raw_df["place"].str.contains("test", case=False, na=False)]
-    prod_df.to_csv(config.WISH_LIST_DATA_PATH)
-    test_df = raw_df[raw_df["place"].str.contains("test", case=False, na=False)]
-    test_df.to_csv(config.TEST_WISH_LIST_DATA_PATH)
+    # Fetch the top-rows which are in fact test profiles to make sure rules are enforced
+    profiles_df = raw_schools_and_profiles_df[raw_schools_and_profiles_df["place"].str.contains("profile", case=False, na=False)]
+    profiles_df.to_csv(config.TEST_PROFILE_WISH_LIST_DATA_PATH)
+
+    # Fetch all other rows (that are not profiles, cf. "~")
+    raw_schools_df = raw_schools_and_profiles_df[~raw_schools_and_profiles_df["place"].str.contains("profile", case=False, na=False)]
+
+    # Fetch all non-test school rows
+    prod_schools_df = raw_schools_df[~raw_schools_df["place"].str.contains("test", case=False, na=False)]
+    prod_schools_df.to_csv(config.WISH_LIST_DATA_PATH)
+
+    # Fetch all test school rows
+    test_schools_df = raw_schools_df[raw_schools_df["place"].str.contains("test", case=False, na=False)]
+    test_schools_df.to_csv(config.TEST_WISH_LIST_DATA_PATH)
 
     return
 

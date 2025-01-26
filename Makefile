@@ -10,7 +10,7 @@ tests:
 	pytest
 
 data:
-	python -c "from backend.app.comet_predictor.generator import create_wish_list_data_files; create_wish_list_data_files()"
+	cd ./backend/app && python3 -c "from comet_predictor.generator import create_wish_list_data_files; create_wish_list_data_files()"
 
 webapp:
 	cd ./backend/app && uvicorn main:app --reload
