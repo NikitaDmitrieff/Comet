@@ -1,6 +1,6 @@
 import pandas as pd
 
-import config
+from backend.app import config
 from backend.app.comet_predictor.generator import (
     generate_possible_wishes,
     create_wish_list_data_files,

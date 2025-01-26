@@ -5,7 +5,7 @@ import streamlit as st
 
 sys.path.append(os.getcwd())
 
-import config
+from backend.app import config
 
 config.ANCHOR
 

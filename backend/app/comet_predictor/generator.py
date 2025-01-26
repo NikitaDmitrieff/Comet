@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import pandas as pd
 
-import config
+from backend.app import config
 
 
 def create_wish_list_data_files():

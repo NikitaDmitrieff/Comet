@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-import config
+from backend.app import config
 from backend.app.comet_predictor.generator import generate_possible_wishes
 from frontend.streamlit.pages.wish_list_predictor_page import streamlit_user_input
 

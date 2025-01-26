@@ -1,7 +1,7 @@
 import os
 from functools import reduce
 
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langsmith import traceable
 
 import config
-from backend.app.comet_helper.rag_pipeline import get_context
+from comet_helper.rag_pipeline import get_context
 
 
 @traceable()

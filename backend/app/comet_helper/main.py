@@ -1,17 +1,17 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Any, Union
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 
 import config
-from backend.app.comet_helper.chat_utils import (
+from comet_helper.chat_utils import (
     basic_inquiry,
     create_full_chain,
     load_embedding,
     load_pdf_documents,
 )
-from backend.app.comet_helper.prompts import (
+from comet_helper.prompts import (
     HYDE_PROMPT_TEMPLATE,
     SYSTEM_PROMPT_TEMPLATE,
     USER_PROMPT_TEMPLATE,
@@ -120,7 +120,7 @@ class GuidanceCounselor:
         self,
         user_question: str = "Hi",
         model_type: str = None,
-    ) -> str:
+    ) -> dict[str, Union[str, Any]]:
 
         reformatted_query = reformat_query(user_question=user_question)
 
@@ -145,7 +145,7 @@ class GuidanceCounselor:
 
         print(answer)
 
-        return answer, system_prompt, user_prompt
+        return {"answer": answer, "system_prompt": system_prompt, "user_prompt": user_prompt}
 
 
 def reformat_query(user_question: str = "Hi", model_type: str = "gpt-3.5-turbo-0125"):
