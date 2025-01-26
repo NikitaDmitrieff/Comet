@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-import config
+from backend.app import config
 
 config.ANCHOR
 

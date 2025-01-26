@@ -1,7 +1,7 @@
 import os
 
-from langchain.document_loaders import PyPDFLoader
 from langchain_chroma import Chroma
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

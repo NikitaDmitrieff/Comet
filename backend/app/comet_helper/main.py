@@ -1,22 +1,16 @@
 import os
-from typing import List, Optional
-
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
+from typing import Any, List, Optional, Union
 
 import config
-from backend.app.comet_helper.chat_utils import (
-    basic_inquiry,
-    create_full_chain,
-    load_embedding,
-    load_pdf_documents,
-)
-from backend.app.comet_helper.prompts import (
+from comet_helper.chat_utils import basic_inquiry, load_embedding, load_pdf_documents
+from comet_helper.prompts import (
     HYDE_PROMPT_TEMPLATE,
     SYSTEM_PROMPT_TEMPLATE,
     USER_PROMPT_TEMPLATE,
     prompt_format,
 )
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
 
 DOC_ORDER_KEY = "chunk_order"
 
@@ -120,7 +114,7 @@ class GuidanceCounselor:
         self,
         user_question: str = "Hi",
         model_type: str = None,
-    ) -> str:
+    ) -> dict[str, Union[str, Any]]:
 
         reformatted_query = reformat_query(user_question=user_question)
 
@@ -145,7 +139,11 @@ class GuidanceCounselor:
 
         print(answer)
 
-        return answer, system_prompt, user_prompt
+        return {
+            "answer": answer,
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+        }
 
 
 def reformat_query(user_question: str = "Hi", model_type: str = "gpt-3.5-turbo-0125"):
@@ -165,24 +163,6 @@ def convert_documents_to_text(documents):
     text = "\n\n".join([doc.page_content for doc in documents])
 
     return text
-
-
-def quick_talk(
-    user_question: str = "Hi",
-    system_template: str = SYSTEM_PROMPT_TEMPLATE,
-    user_template: str = USER_PROMPT_TEMPLATE,
-    pdf_directory: str = os.getenv("COMET_HELPER_DATA_PATH"),
-    model_type: str = None,
-):
-
-    talker = create_full_chain(
-        pdf_directory=pdf_directory,
-        system_template=system_template,
-        user_template=user_template,
-        model_type=model_type,
-    )
-
-    return talker.invoke(user_question)
 
 
 def clean_text(text: str) -> str:
