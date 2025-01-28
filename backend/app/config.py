@@ -1,6 +1,16 @@
 import os
 import sys
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict
+
+from langchain_openai.chat_models import AzureChatOpenAI
+
+OPENAI_API_VERSION = "2024-05-01-preview"
+OPENAI_API_TYPE = "azure"
+
+AZURE_OPENAI_ENDPOINT = "https://chatbot-helper.openai.azure.com/"
+EMBEDDINGS_MODEL = "text-embedding-ada-002"
 
 # Add the parent directory to sys.path
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -19,9 +29,7 @@ RAW_WISH_LIST_DATA_PATH = (
     APP_ROOT / "comet_predictor/data_wish_list/raw_parsed_wish_list.csv"
 )
 
-WISH_LIST_DATA_PATH = (
-    APP_ROOT / "comet_predictor/data_wish_list/parsed_wish_list.csv"
-)
+WISH_LIST_DATA_PATH = APP_ROOT / "comet_predictor/data_wish_list/parsed_wish_list.csv"
 TEST_WISH_LIST_DATA_PATH = (
     BACKEND_ROOT / "tests/comet_predictor/test_data/test_data_wish_list.csv"
 )
@@ -40,3 +48,48 @@ os.environ["RAW_WISH_LIST_DATA_PATH"] = str(RAW_WISH_LIST_DATA_PATH)
 
 
 ANCHOR = True
+
+
+class DeploymentName(str, Enum):
+    GPT_35_TURBO = "gpt-35-turbo"
+
+
+DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
+    DeploymentName.GPT_35_TURBO: 120,
+}
+
+
+def _get_api_kwargs_by_region() -> dict[str, str]:
+    return {
+        "openai_api_version": OPENAI_API_VERSION,
+        "openai_api_key": credentials.AZURE_OPENAI_API_KEY,
+        "azure_endpoint": "https://nikit-m6h22b4j-swedencentral.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+    }
+
+
+def _get_embeddings_api_kwargs() -> Dict[str, Any]:
+    return {
+        **_get_api_kwargs_by_region(),
+        "model": EMBEDDINGS_MODEL,
+        "openai_api_type": OPENAI_API_TYPE,
+    }
+
+
+def get_chat_kwargs(model: DeploymentName) -> list[dict[str, Any]]:
+
+    chat_kwargs = {
+        **_get_api_kwargs_by_region(),
+        "temperature": 0,
+        "max_tokens": None,
+        "max_retries": 2,
+        "model_kwargs": {"top_p": 1, "frequency_penalty": 0, "presence_penalty": 0},
+        "model": model.value,
+        "deployment_name": model.value,
+        "request_timeout": DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT[model],
+    }
+    return chat_kwargs
+
+
+kwargs = get_chat_kwargs(DeploymentName.GPT_35_TURBO)
+
+chat = AzureChatOpenAI(**kwargs)
