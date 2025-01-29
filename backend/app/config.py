@@ -49,9 +49,22 @@ os.environ["RAW_WISH_LIST_DATA_PATH"] = str(RAW_WISH_LIST_DATA_PATH)
 
 ANCHOR = True
 
+class AzureOpenAiRegions(str, Enum):
+    FRC = "francecentral"
+    EUS = "eastus"
+    SEC = "swedencentral"
+    WUS = "westus"
+
 
 class DeploymentName(str, Enum):
     GPT_35_TURBO = "gpt-35-turbo"
+
+
+OPENAI_ENDPOINT_BY_MODEL = {
+    DeploymentName.GPT_35_TURBO: {
+        AzureOpenAiRegions.FRC: "https://nikit-m6hyvogj-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+    }
+}
 
 
 DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
@@ -59,11 +72,15 @@ DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
 }
 
 
-def _get_api_kwargs_by_region() -> dict[str, str]:
+def _fetch_endpoint(model: DeploymentName, region:AzureOpenAiRegions):
+    return OPENAI_ENDPOINT_BY_MODEL[model][region]
+
+
+def _get_api_kwargs_by_region(model: DeploymentName, region:AzureOpenAiRegions) -> dict[str, str]:
     return {
         "openai_api_version": OPENAI_API_VERSION,
         "openai_api_key": credentials.AZURE_OPENAI_API_KEY,
-        "azure_endpoint": "https://nikit-m6h22b4j-swedencentral.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+        "azure_endpoint": _fetch_endpoint(model, region),
     }
 
 
@@ -75,14 +92,16 @@ def _get_embeddings_api_kwargs() -> Dict[str, Any]:
     }
 
 
-def get_chat_kwargs(model: DeploymentName) -> list[dict[str, Any]]:
+def get_chat_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> list[dict[str, Any]]:
 
     chat_kwargs = {
-        **_get_api_kwargs_by_region(),
+        **_get_api_kwargs_by_region(model=model, region=region),
         "temperature": 0,
         "max_tokens": None,
         "max_retries": 2,
-        "model_kwargs": {"top_p": 1, "frequency_penalty": 0, "presence_penalty": 0},
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
         "model": model.value,
         "deployment_name": model.value,
         "request_timeout": DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT[model],
@@ -90,6 +109,5 @@ def get_chat_kwargs(model: DeploymentName) -> list[dict[str, Any]]:
     return chat_kwargs
 
 
-kwargs = get_chat_kwargs(DeploymentName.GPT_35_TURBO)
-
-chat = AzureChatOpenAI(**kwargs)
+default_kwargs = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
+gpt35_kwargs = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
