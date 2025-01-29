@@ -1,28 +1,16 @@
 import asyncio
 import os
-from typing import Optional, Dict, Type, Tuple, List, Union, Any
-
-from langchain_community.chat_models import ChatOpenAI
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings, AzureChatOpenAI
-from langsmith import traceable
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import config
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_openai import AzureChatOpenAI, ChatOpenAI, OpenAIEmbeddings
+from langsmith import traceable
 
 
-@traceable()
-def load_model(model_type: Optional[str] = None) -> ChatOpenAI:
-
-    if not model_type:
-        model_type = "gpt-4o-mini"
-
-    model = ChatOpenAI(model=model_type)
-    return model
-
-
-@traceable()
 def load_embedding(embedding_type=None):
 
     if not embedding_type:
@@ -31,40 +19,6 @@ def load_embedding(embedding_type=None):
     model = OpenAIEmbeddings(model=embedding_type)
 
     return model
-
-
-@traceable()
-def basic_inquiry(
-    system_prompt: str = "Translate the following from English into Italian",
-    user_prompt: str = "hi!",
-    model_type: str = None,
-    model: ChatOpenAI =None,
-):
-    # TODO: Remove and switch to ChatManager organization. Waiting on Azure clearance.
-
-    if not model:
-        model = load_model(model_type=model_type)
-
-    messages = [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_prompt),
-    ]
-
-    result = model.invoke(messages).content
-
-    return result
-
-
-def prompt_template_generator(
-    system_template="Please translate the following text into {language}.",
-    user_template="{text}",
-):
-
-    prompt_template = ChatPromptTemplate.from_messages(
-        [("system", system_template), ("user", user_template)]
-    )
-
-    return prompt_template
 
 
 def load_pdf_documents(

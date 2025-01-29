@@ -1,38 +1,39 @@
 import os
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import config
-from comet_helper.chat_utils import basic_inquiry, load_embedding, load_pdf_documents
-from comet_helper.prompts import (
-    HYDE_PROMPT_TEMPLATE,
-    SYSTEM_PROMPT_TEMPLATE,
-    USER_PROMPT_TEMPLATE,
-    prompt_format,
-)
+from comet_helper.chat_utils import ChatManager, load_pdf_documents
+from comet_helper.prompts import (HYDE_PROMPT_TEMPLATE, SYSTEM_PROMPT_TEMPLATE,
+                                  USER_PROMPT_TEMPLATE, prompt_format)
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 DOC_ORDER_KEY = "chunk_order"
 
 
-class GuidanceCounselor:
+class GuidanceCounselor(ChatManager):
 
     def __init__(
         self,
         pdf_directory=config.COMET_HELPER_DATA_PATH,
         system_template: str = SYSTEM_PROMPT_TEMPLATE,
         user_template: str = USER_PROMPT_TEMPLATE,
+        chat_kwargs: Optional[Dict[str, Union[str, int]]] = None,
         vector_store_chunk_size_in_tokens: int = 250,
         vector_store_chunk_overlap_in_tokens: int = 25,
         vector_store_separators: Optional[List[str]] = None,
         number_of_documents_to_retrieve: int = 10,
         verbose: bool = False,
     ):
+        super().__init__(chat_kwargs=chat_kwargs)
 
         self.verbose = verbose
 
         self.vector_store = None
-        self.embeddings = load_embedding()
+
+        self.embeddings = AzureOpenAIEmbeddings(**config.DEFAULT_EMBEDDING_KWARGS)
+
         self.vector_store_chunk_size_in_tokens = vector_store_chunk_size_in_tokens
         self.vector_store_chunk_overlap_in_tokens = vector_store_chunk_overlap_in_tokens
 
@@ -51,7 +52,7 @@ class GuidanceCounselor:
 
         return
 
-    def ingest_pdfs_to_vector_store(self) -> None:
+    async def ingest_pdfs_to_vector_store(self) -> None:
         """
         Split text into chunks.
         Embed chunks and ingest those to a FAISS vector store
@@ -77,9 +78,9 @@ class GuidanceCounselor:
         for i, doc in enumerate(documents):
             doc.metadata.update(metadatas[i])
 
-        self.vector_store = FAISS.from_documents(
+        self.vector_store = await FAISS.afrom_documents(
             documents=documents,
-            embedding=self.embeddings,
+            embedding=self.embeddings, # TODO: Correct embeddings thing
         )
 
         if self.verbose:
@@ -87,7 +88,7 @@ class GuidanceCounselor:
                 print(document.page_content.lower().count("neoma"))
                 print(document.page_content.lower()[40:55])
 
-    def retrieve_documents(
+    async def retrieve_documents(
         self,
         query: str = None,
         force_db_delete=False,
@@ -98,8 +99,8 @@ class GuidanceCounselor:
                 self.vector_store.delete_collection()
             except AttributeError:
                 pass
-
-            self.ingest_pdfs_to_vector_store()
+            print("ingesting pdfs")
+            await self.ingest_pdfs_to_vector_store()
 
         if not query:
             query = "Combien d'écoles en post-bac"
@@ -110,15 +111,15 @@ class GuidanceCounselor:
 
         return results
 
-    def generate_answer(
+    async def generate_answer(
         self,
         user_question: str = "Hi",
         model_type: str = None,
     ) -> dict[str, Union[str, Any]]:
 
-        reformatted_query = reformat_query(user_question=user_question)
+        reformatted_query = await self.reformat_query(user_question=user_question)
 
-        context_as_documents = self.retrieve_documents(query=reformatted_query)
+        context_as_documents = await self.retrieve_documents(query=reformatted_query)
         context_as_text = convert_documents_to_text(documents=context_as_documents)
         context_as_text_cleaned = clean_text(text=context_as_text)
 
@@ -129,9 +130,8 @@ class GuidanceCounselor:
             user_template=self.user_prompt_template,
         )
 
-        answer = basic_inquiry(
-            system_prompt=system_prompt, user_prompt=user_prompt, model_type=model_type
-        )
+        answer = await self.ainvoke_message(
+            system_prompt=system_prompt, user_prompt=user_prompt)
 
         answer = (
             answer.replace("< lang=" rf">", "").replace("html", "").replace("```", "")
@@ -146,15 +146,13 @@ class GuidanceCounselor:
         }
 
 
-def reformat_query(user_question: str = "Hi", model_type: str = "gpt-3.5-turbo-0125"):
+    async def reformat_query(self, user_question: str = "Hi"):
 
-    reformatted_query = basic_inquiry(
-        system_prompt="",
-        user_prompt=HYDE_PROMPT_TEMPLATE.format(QUESTION=user_question),
-        model_type=model_type,
-    )
+        reformatted_query = await self.ainvoke_message(
+            user_prompt=HYDE_PROMPT_TEMPLATE.format(QUESTION=user_question),
+        )
 
-    return reformatted_query
+        return reformatted_query
 
 
 def convert_documents_to_text(documents):

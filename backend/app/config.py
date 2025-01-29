@@ -4,8 +4,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict
 
-from langchain_openai.chat_models import AzureChatOpenAI
-
 OPENAI_API_VERSION = "2024-05-01-preview"
 OPENAI_API_TYPE = "azure"
 
@@ -72,21 +70,17 @@ DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
 }
 
 
-def _fetch_endpoint(model: DeploymentName, region:AzureOpenAiRegions):
-    return OPENAI_ENDPOINT_BY_MODEL[model][region]
-
-
 def _get_api_kwargs_by_region(model: DeploymentName, region:AzureOpenAiRegions) -> dict[str, str]:
     return {
         "openai_api_version": OPENAI_API_VERSION,
         "openai_api_key": credentials.AZURE_OPENAI_API_KEY,
-        "azure_endpoint": _fetch_endpoint(model, region),
+        "azure_endpoint": OPENAI_ENDPOINT_BY_MODEL[model][region],
     }
 
 
-def _get_embeddings_api_kwargs() -> Dict[str, Any]:
+def _get_embeddings_api_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> Dict[str, Any]:
     return {
-        **_get_api_kwargs_by_region(),
+        **_get_api_kwargs_by_region(model=model, region=region),
         "model": EMBEDDINGS_MODEL,
         "openai_api_type": OPENAI_API_TYPE,
     }
@@ -109,5 +103,6 @@ def get_chat_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> list[di
     return chat_kwargs
 
 
-default_kwargs = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
-gpt35_kwargs = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
+DEFAULT_EMBEDDING_KWARGS = _get_embeddings_api_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
+DEFAULT_CHATGPT_KWARGS = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
+GPT35_TURBO_KWARGS = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
