@@ -1,8 +1,7 @@
 from typing import List, Tuple
 
-import pandas as pd
-
 import config
+import pandas as pd
 
 
 def create_wish_list_data_files():
@@ -17,21 +16,35 @@ def create_wish_list_data_files():
     """
 
     raw_schools_and_profiles_df = pd.read_csv(config.RAW_WISH_LIST_DATA_PATH)
-    raw_schools_and_profiles_df = raw_schools_and_profiles_df.loc[:, ~raw_schools_and_profiles_df.columns.str.contains("^Unnamed")]
+    raw_schools_and_profiles_df = raw_schools_and_profiles_df.loc[
+        :, ~raw_schools_and_profiles_df.columns.str.contains("^Unnamed")
+    ]
 
     # Fetch the top-rows which are in fact test profiles to make sure rules are enforced
-    profiles_df = raw_schools_and_profiles_df[raw_schools_and_profiles_df["place"].str.contains("profile", case=False, na=False)]
+    profiles_df = raw_schools_and_profiles_df[
+        raw_schools_and_profiles_df["place"].str.contains(
+            "profile", case=False, na=False
+        )
+    ]
     profiles_df.to_csv(config.TEST_PROFILE_WISH_LIST_DATA_PATH)
 
     # Fetch all other rows (that are not profiles, cf. "~")
-    raw_schools_df = raw_schools_and_profiles_df[~raw_schools_and_profiles_df["place"].str.contains("profile", case=False, na=False)]
+    raw_schools_df = raw_schools_and_profiles_df[
+        ~raw_schools_and_profiles_df["place"].str.contains(
+            "profile", case=False, na=False
+        )
+    ]
 
     # Fetch all non-test school rows
-    prod_schools_df = raw_schools_df[~raw_schools_df["place"].str.contains("test", case=False, na=False)]
+    prod_schools_df = raw_schools_df[
+        ~raw_schools_df["place"].str.contains("test", case=False, na=False)
+    ]
     prod_schools_df.to_csv(config.WISH_LIST_DATA_PATH)
 
     # Fetch all test school rows
-    test_schools_df = raw_schools_df[raw_schools_df["place"].str.contains("test", case=False, na=False)]
+    test_schools_df = raw_schools_df[
+        raw_schools_df["place"].str.contains("test", case=False, na=False)
+    ]
     test_schools_df.to_csv(config.TEST_WISH_LIST_DATA_PATH)
 
     return

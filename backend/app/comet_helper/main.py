@@ -3,8 +3,12 @@ from typing import Any, Dict, List, Optional, Union
 
 import config
 from comet_helper.chat_utils import ChatManager, load_pdf_documents
-from comet_helper.prompts import (HYDE_PROMPT_TEMPLATE, SYSTEM_PROMPT_TEMPLATE,
-                                  USER_PROMPT_TEMPLATE, prompt_format)
+from comet_helper.prompts import (
+    HYDE_PROMPT_TEMPLATE,
+    SYSTEM_PROMPT_TEMPLATE,
+    USER_PROMPT_TEMPLATE,
+    prompt_format,
+)
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
@@ -80,7 +84,7 @@ class GuidanceCounselor(ChatManager):
 
         self.vector_store = await FAISS.afrom_documents(
             documents=documents,
-            embedding=self.embeddings, # TODO: Correct embeddings thing
+            embedding=self.embeddings,  # TODO: Correct embeddings thing
         )
 
         if self.verbose:
@@ -131,7 +135,8 @@ class GuidanceCounselor(ChatManager):
         )
 
         answer = await self.ainvoke_message(
-            system_prompt=system_prompt, user_prompt=user_prompt)
+            system_prompt=system_prompt, user_prompt=user_prompt
+        )
 
         answer = (
             answer.replace("< lang=" rf">", "").replace("html", "").replace("```", "")
@@ -144,7 +149,6 @@ class GuidanceCounselor(ChatManager):
             "system_prompt": system_prompt,
             "user_prompt": user_prompt,
         }
-
 
     async def reformat_query(self, user_question: str = "Hi"):
 

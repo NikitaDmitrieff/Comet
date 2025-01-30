@@ -47,6 +47,7 @@ os.environ["RAW_WISH_LIST_DATA_PATH"] = str(RAW_WISH_LIST_DATA_PATH)
 
 ANCHOR = True
 
+
 class AzureOpenAiRegions(str, Enum):
     FRC = "francecentral"
     EUS = "eastus"
@@ -60,7 +61,7 @@ class DeploymentName(str, Enum):
 
 OPENAI_ENDPOINT_BY_MODEL = {
     DeploymentName.GPT_35_TURBO: {
-        AzureOpenAiRegions.FRC: "https://nikit-m6hyvogj-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+        AzureOpenAiRegions.EUS: "https://nikit-m6hyvogj-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
     }
 }
 
@@ -70,7 +71,9 @@ DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
 }
 
 
-def _get_api_kwargs_by_region(model: DeploymentName, region:AzureOpenAiRegions) -> dict[str, str]:
+def _get_api_kwargs_by_model_and_region(
+    model: DeploymentName, region: AzureOpenAiRegions
+) -> dict[str, str]:
     return {
         "openai_api_version": OPENAI_API_VERSION,
         "openai_api_key": credentials.AZURE_OPENAI_API_KEY,
@@ -78,18 +81,22 @@ def _get_api_kwargs_by_region(model: DeploymentName, region:AzureOpenAiRegions) 
     }
 
 
-def _get_embeddings_api_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> Dict[str, Any]:
+def _get_embeddings_api_kwargs(
+    model: DeploymentName, region: AzureOpenAiRegions
+) -> Dict[str, Any]:
     return {
-        **_get_api_kwargs_by_region(model=model, region=region),
+        **_get_api_kwargs_by_model_and_region(model=model, region=region),
         "model": EMBEDDINGS_MODEL,
         "openai_api_type": OPENAI_API_TYPE,
     }
 
 
-def get_chat_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> list[dict[str, Any]]:
+def _get_chat_kwargs(
+    model: DeploymentName, region: AzureOpenAiRegions
+) -> list[dict[str, Any]]:
 
     chat_kwargs = {
-        **_get_api_kwargs_by_region(model=model, region=region),
+        **_get_api_kwargs_by_model_and_region(model=model, region=region),
         "temperature": 0,
         "max_tokens": None,
         "max_retries": 2,
@@ -103,6 +110,12 @@ def get_chat_kwargs(model: DeploymentName, region:AzureOpenAiRegions) -> list[di
     return chat_kwargs
 
 
-DEFAULT_EMBEDDING_KWARGS = _get_embeddings_api_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
-DEFAULT_CHATGPT_KWARGS = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
-GPT35_TURBO_KWARGS = get_chat_kwargs(model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.FRC)
+DEFAULT_EMBEDDING_KWARGS = _get_embeddings_api_kwargs(
+    model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.EUS
+)
+DEFAULT_CHATGPT_KWARGS = _get_chat_kwargs(
+    model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.EUS
+)
+GPT35_TURBO_KWARGS = _get_chat_kwargs(
+    model=DeploymentName.GPT_35_TURBO, region=AzureOpenAiRegions.EUS
+)

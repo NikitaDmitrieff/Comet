@@ -54,7 +54,9 @@ def _convert_prompts_to_langchain_messages(
 ) -> List[BaseMessage]:
     """Converts system and user prompts, along with optional image URLs, to a list of langchain messages."""
     if not system_prompt and not user_prompt and not images:
-        raise ValueError("At least one of system_prompt, user_prompt, or images must be provided.")
+        raise ValueError(
+            "At least one of system_prompt, user_prompt, or images must be provided."
+        )
 
     messages = []
     if system_prompt is not None:
@@ -72,7 +74,12 @@ def _convert_prompts_to_langchain_messages(
                 if image_prefix is not None:
                     user_content.append({"type": "text", "text": image_prefix})
 
-                user_content.append({"type": "image_url", "image_url": {"url": image_url, "detail": "low"}})
+                user_content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_url, "detail": "low"},
+                    }
+                )
 
     if len(user_content) > 0:
         messages.append(HumanMessage(content=user_content))
@@ -93,11 +100,11 @@ class ChatManager:
         :param chat_kwargs: A list of dictionaries containing the kwargs for the main chat instance and any fallbacks.
         """
         self.chat_kwargs = chat_kwargs or config.DEFAULT_CHATGPT_KWARGS
-        self.chat_instance = create_chat_instance(
-            self.chat_kwargs
-        )
+        self.chat_instance = create_chat_instance(self.chat_kwargs)
 
-    async def ainvoke_prompt(self, prompt: PromptTemplate, inputs: Optional[Dict[str, str]] = None) -> str:
+    async def ainvoke_prompt(
+        self, prompt: PromptTemplate, inputs: Optional[Dict[str, str]] = None
+    ) -> str:
         """
         Invokes chat using prompt inputs.
             prompt: PromptTemplate
@@ -120,7 +127,9 @@ class ChatManager:
             system_prompt: str
             images: [str, str]
         """
-        message = _convert_prompts_to_langchain_messages(system_prompt, user_prompt, images)
+        message = _convert_prompts_to_langchain_messages(
+            system_prompt, user_prompt, images
+        )
         response = await self.chat_instance.ainvoke(message)
         return response.content
 
