@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 import config
+import tiktoken
 from comet_helper.chat_utils import ChatManager, load_pdf_documents
 from comet_helper.prompts import (
     HYDE_PROMPT_TEMPLATE,
@@ -103,7 +104,6 @@ class GuidanceCounselor(ChatManager):
                 self.vector_store.delete_collection()
             except AttributeError:
                 pass
-            print("ingesting pdfs")
             await self.ingest_pdfs_to_vector_store()
 
         if not query:
@@ -125,7 +125,7 @@ class GuidanceCounselor(ChatManager):
 
         context_as_documents = await self.retrieve_documents(query=reformatted_query)
         context_as_text = convert_documents_to_text(documents=context_as_documents)
-        context_as_text_cleaned = clean_text(text=context_as_text)
+        context_as_text_cleaned = clean_and_shorten_text(text=context_as_text)
 
         system_prompt, user_prompt = prompt_format(
             user_question=user_question,
@@ -167,11 +167,20 @@ def convert_documents_to_text(documents):
     return text
 
 
-def clean_text(text: str) -> str:
+def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
+    """Returns the number of tokens in a text string."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
+
+def clean_and_shorten_text(text: str) -> str:
 
     cleaned_text = text.replace("The Comet Project   2022-2023", " ").replace(
         "The Comet Project  2022-2023", " "
     )
+    while config.MAX_NUM_TOKENS < num_tokens_from_string(cleaned_text):
+        cleaned_text = cleaned_text[: int(len(cleaned_text) * 0.9)]
 
     return cleaned_text
 

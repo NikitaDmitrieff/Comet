@@ -61,7 +61,7 @@ class DeploymentName(str, Enum):
 
 OPENAI_ENDPOINT_BY_MODEL = {
     DeploymentName.GPT_35_TURBO: {
-        AzureOpenAiRegions.EUS: "https://nikit-m6hyvogj-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+        AzureOpenAiRegions.EUS: "https://nikit-m6hyvogj-eastus2.openai.azure.com/",
     }
 }
 
@@ -69,6 +69,13 @@ OPENAI_ENDPOINT_BY_MODEL = {
 DEFAULT_REQUEST_TIMEOUT_S_BY_DEPLOYMENT = {
     DeploymentName.GPT_35_TURBO: 120,
 }
+
+TOKEN_RATE_BY_MODEL = {
+    DeploymentName.GPT_35_TURBO: 100,
+}
+
+# TODO: Implement region and model selection for all var
+MAX_NUM_TOKENS = TOKEN_RATE_BY_MODEL[DeploymentName.GPT_35_TURBO]
 
 
 def _get_api_kwargs_by_model_and_region(
