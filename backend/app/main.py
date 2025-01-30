@@ -1,9 +1,8 @@
 import os
 
+from comet_helper.main import GuidanceCounselor
 from fastapi import FastAPI
 from pydantic import BaseModel
-
-from comet_helper.main import GuidanceCounselor
 
 
 class Profile(BaseModel):
@@ -40,6 +39,6 @@ async def ask(question: Question):
         pdf_directory=os.getenv("COMET_HELPER_DATA_PATH"),
     )
 
-    output = guidance_counselor.generate_answer(user_question=question.text)
+    output = await guidance_counselor.generate_answer(user_question=question.text)
 
     return {"Question": question.text, "Answer": output["answer"]}
